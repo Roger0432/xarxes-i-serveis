@@ -8,8 +8,9 @@ import random
 import string
 
 # Configuració de l'API d'OpenWeatherMap
-API_KEY = "LA_TEVA_CLAU_API"
-BASE_URL = "https://api.openweathermap.org/data/2.5/onecall"
+API_KEY = "b29796a429fbe946f851a5faccc71712"
+BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
+
 
 def generate_node_id():
     return ''.join(random.choices(string.ascii_letters + string.digits, k=10))
@@ -19,9 +20,9 @@ def get_weather_data(lat, lon):
     response = requests.get(url)
     data = response.json()
     if response.status_code == 200:
-        temperature = data['current']['temp']
-        humidity = data['current']['humidity']
-        pressure = data['current']['pressure']
+        temperature = data['main']['temp']
+        humidity = data['main']['humidity']
+        pressure = data['main']['pressure']
         return temperature, humidity, pressure
     else:
         print("Error en obtenir les dades:", data)
