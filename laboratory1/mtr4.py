@@ -79,7 +79,7 @@ def receive_icmp_reply(icmp_socket, target_ip, ttl, send_time, timings_per_host,
 
         icmp_header = recv_packet[20:28]
 
-        type = struct.unpack("bbHHh", icmp_header)
+        type, code, checksum, p_id, sequence = struct.unpack("bbHHh", icmp_header)
 
         if type == 11 or type == 0:
             ip = addr[0]

@@ -76,10 +76,10 @@ def receive_icmp_reply(icmp_socket, target_ip, ttl, send_time):
         recv_time = time.time()
         rtt = (recv_time - send_time) * 1000  # RTT in milliseconds
 
-        if addr[0] == target_ip:
-            return rtt, addr[0], True  # Success
+        if addr[1][0] == target_ip:
+            return rtt, addr[1][0], True  # Success
         else:
-            return rtt, addr[0], False  # ICMP response from an intermediate hop
+            return rtt, addr[1][0], False  # ICMP response from an intermediate hop
     except socket.timeout:
         return None, None, None  # Timeout
 

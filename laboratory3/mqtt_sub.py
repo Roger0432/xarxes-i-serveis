@@ -1,8 +1,8 @@
-import paho.mqtt.client as mqtt
+import config
 import signal
 import time
+import paho.mqtt.client as mqtt
 
-# Variable per acabar l'execució amb CTRL+C
 is_finished = False
 
 def on_sigint(signal_received, frame):
@@ -10,47 +10,57 @@ def on_sigint(signal_received, frame):
     is_finished = True
 
 def on_connect(client, userdata, flags, rc):
-    print("Connectat al servidor!")
+    print("Connected to the server!")
 
 def on_message(client, userdata, message):
-    # Imprimir el missatge rebut
     topic = message.topic
     msg = message.payload.decode()
-    print(f"Missatge='{msg}' rebut al tema='{topic}'.")
+    print("Message='{}' received on topic='{}'.".format(msg, topic))
 
 def main():
     global is_finished
 
-    # Configura les dades de connexió
-    mqtt_server = "broker.hivemq.com"  # Substitueix amb el teu broker
-    mqtt_port = 1883
-    mqtt_topic = "esupt"  # Tema per subscriure's
+    # Retrieve configuration information
+    mqtt_server = config.mqtt_config["mqtt_server"]
+    mqtt_topic = config.mqtt_config["mqtt_topic"]
+    mqtt_port = config.mqtt_config["mqtt_port"]
 
-    # Registra la interrupció del teclat CTRL+C
+    # Register the keyboard interrupt CTRL+C
     signal.signal(signal.SIGINT, on_sigint)
 
-    # Crear client MQTT
+    # Create MQTT client
     mqtt_client = mqtt.Client()
+
+    # Connect the MQTT client to the server
+    mqtt_client.connect(mqtt_server, port=mqtt_port)
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
 
-    # Connectar el client al servidor MQTT
-    mqtt_client.connect(mqtt_server, port=mqtt_port)
+    # Read the topic from keyboard
+    topic = input("Enter the topic you want to subscribe to: ")
 
-    # Subscripció al tema amb QoS=0
-    mqtt_client.subscribe(mqtt_topic, qos=0)
+    # If the topic is empty, use the default topic
+    if not topic:
+        print("Empty topic, using default topic='{}'.".format(mqtt_topic))
+        topic = mqtt_topic
 
-    # Iniciar el bucle MQTT en un fil separat
+    # Subscribe to the topic with QoS=0
+    mqtt_client.subscribe(topic, qos=0)
+
+    # Start the MQTT thread
     mqtt_client.loop_start()
 
-    # Executa fins que l'usuari premi CTRL+C
+    # Loop until the user presses CTRL+C
     while not is_finished:
+        # Sleep for 100 ms
         time.sleep(0.1)
 
-    print("CTRL+C premut, aturant l'execució del programa!")
+    print("You pressed CTRL+C, stopping program execution!")
 
-    # Desconnectar i aturar el fil del client MQTT
+    # Disconnect from the MQTT server
     mqtt_client.disconnect()
+
+    # Stop the MQTT thread
     mqtt_client.loop_stop()
 
 if __name__ == "__main__":

@@ -69,7 +69,7 @@ def resolve_ip_to_hostname(ip):
 # Receive ICMP Echo Reply or Time Exceeded message and calculate statistics
 def receive_icmp_reply(icmp_socket, target_ip, ttl, send_time, timings_per_host):
     try:
-        addr = icmp_socket.recvfrom(1024)
+        packet, addr = icmp_socket.recvfrom(1024)
         recv_time = time.time()
         rtt = (recv_time - send_time) * 1000  # RTT in milliseconds
 

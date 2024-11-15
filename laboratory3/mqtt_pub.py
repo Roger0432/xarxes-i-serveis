@@ -1,34 +1,46 @@
+import config
 import paho.mqtt.client as mqtt
 
 def main():
-    # Configura les dades de connexió
-    mqtt_server = "broker.hivemq.com"  # Substitueix amb el teu broker
-    mqtt_port = 1883
-    mqtt_topic = "esupt"  # Tema on publicar
-    mqtt_name = "mqtt_publisher"  # Identificador del client
+    # Retrieve MQTT configuration information
+    mqtt_server = config.mqtt_config["mqtt_server"]
+    mqtt_topic = config.mqtt_config["mqtt_topic"]
+    mqtt_name = config.mqtt_config["mqtt_name"]
+    mqtt_port = config.mqtt_config["mqtt_port"]
 
-    # Crear client MQTT
+    # Create MQTT client
     mqtt_client = mqtt.Client(mqtt_name)
-    
-    # Connectar el client al servidor MQTT
-    mqtt_client.connect(mqtt_server, port=mqtt_port, keepalive=60)
 
-    # Iniciar el bucle MQTT en un fil separat
+    # Connect the client to the MQTT server
+    mqtt_client.connect(mqtt_server, port=mqtt_port, keepalive=60, bind_address="")
+
+    # Start the MQTT thread
     mqtt_client.loop_start()
+
+    # Read the topic from keyboard
+    topic = input("Enter the topic you want to publish to: ")
+
+    # If the topic is empty, use the default one
+    if not topic:
+        print("Empty topic, using the default topic (topic={})".format(mqtt_topic))
+        topic = mqtt_topic
 
     is_finished = False
     while not is_finished:
-        message = input("Escriu el missatge que vols enviar: ")
+        message = input("Enter the message you want to send: ")
         if not message:
-            print("Cap missatge introduït, acabant el programa!")
+            # Mark the end of the program
+            print("No message entered, ending the program!")
             is_finished = True
         else:
-            # Publicar el missatge al tema amb QoS=0 i Retain=False
-            print(f"Publicant missatge='{message}' al tema='{mqtt_topic}'.")
-            mqtt_client.publish(mqtt_topic, payload=message, qos=0, retain=False)
+            # Publish message to the topic with QoS=0 and Retain=False
+            print("Publishing message='{}' to topic='{}'.".format(message, topic))
+            mqtt_client.publish(topic, payload=message, qos=0, retain=False)
 
-    # Desconnectar i aturar el fil del client MQTT
+    # Disconnect from the MQTT server
     mqtt_client.disconnect()
+
+    # Stop the MQTT thread
     mqtt_client.loop_stop()
 
 if __name__ == "__main__":
