@@ -6,75 +6,78 @@ import base64
 import json
 import config
 
-# Emmagatzema els últims n missatges rebuts
+# Store the last n received messages
 data_store = []
-n = config.mqtt_config["messages_to_store"]  # Nombre de missatges a emmagatzemar
+n = config.mqtt_config["messages_to_store"]  # Number of messages to store
 
-# Funció per processar el missatge rebut i afegir-lo a data_store
+# Process received messages and add them to data_store
 def on_message(client, userdata, message):
-    payload = json.loads(message.payload.decode())
-    data_store.append(payload)
+    payload = json.loads(message.payload.decode())  # Decode the message payload
+    data_store.append(payload)  # Add the new message to the store
     if len(data_store) > n:
-        data_store.pop(0)  # Elimina el més antic per mantenir els últims n
+        data_store.pop(0)  # Remove the oldest message to maintain the last n messages
 
-# Funció per configurar el client MQTT
+# Function to configure the MQTT client
 def setup_mqtt_client(server, port, topic):
-    client = mqtt.Client()
-    client.on_message = on_message
-    client.connect(server, port, 60)
-    client.subscribe(topic)
-    client.loop_start()
+    client = mqtt.Client()  # Create an MQTT client instance
+    client.on_message = on_message  # Set the callback for incoming messages
+    client.connect(server, port, 60)  # Connect to the MQTT broker
+    client.subscribe(topic)  # Subscribe to the specified topic
+    client.loop_start()  # Start the network loop in a separate thread
     return client
 
-# Funció per generar gràfics en format base64
+# Function to create a plot from the data
 def create_plot(data, title, ylabel):
     plt.figure()
     x = range(len(data))
     plt.plot(x, data, marker='o')
-    plt.title(title)
-    plt.xlabel('Mesures')
+    plt.title(title) 
+    plt.xlabel('Measurements')
     plt.ylabel(ylabel)
     buf = BytesIO()
     plt.savefig(buf, format="png")
-    buf.seek(0)
+    buf.seek(0) 
     plt.close()
     return base64.b64encode(buf.getvalue()).decode("utf-8")
 
-# Ruta de la pàgina web per mostrar els gràfics
+# Web route to display the plots
 @route('/')
 def index():
-    if not data_store:
-        return "<p>No hi ha dades disponibles.</p>"
+    if not data_store:  # Check if there is data to display
+        return "<p>No data available.</p>"  # Show a message if no data is present
 
+    # Extract data for temperature, humidity, and pressure
     temperatures = [data['temperature'] for data in data_store]
     humidities = [data['humidity'] for data in data_store]
     pressures = [data['pressure'] for data in data_store]
 
-    temp_img = create_plot(temperatures, "Temperatura", "°C")
-    hum_img = create_plot(humidities, "Humitat", "%")
-    pres_img = create_plot(pressures, "Pressió", "hPa")
+    # Generate plots for each type of data
+    temp_img = create_plot(temperatures, "Temperature", "°C")
+    hum_img = create_plot(humidities, "Humidity", "%")
+    pres_img = create_plot(pressures, "Pressure", "hPa")
 
     return template('''
-        <h1>Gràfics de dades meteorològiques</h1>
-        <h2>Temperatura</h2>
+        <h1>Weather Data Graphs</h1>
+        <h2>Temperature</h2>
         <img src="data:image/png;base64,{{temp_img}}" />
-        <h2>Humitat</h2>
+        <h2>Humidity</h2>
         <img src="data:image/png;base64,{{hum_img}}" />
-        <h2>Pressió</h2>
+        <h2>Pressure</h2>
         <img src="data:image/png;base64,{{pres_img}}" />
     ''', temp_img=temp_img, hum_img=hum_img, pres_img=pres_img)
 
+# Main function to set up MQTT and start the web server
 def main():
     mqtt_server = config.mqtt_config["mqtt_server"]
     mqtt_port = config.mqtt_config["mqtt_port"]
     mqtt_topic = config.mqtt_config["mqtt_topic"]
 
-    client = setup_mqtt_client(mqtt_server, mqtt_port, mqtt_topic)
+    client = setup_mqtt_client(mqtt_server, mqtt_port, mqtt_topic)  # Initialize the MQTT client
 
     try:
         run(host='localhost', port=8080, debug=True)
     except KeyboardInterrupt:
-        print("\nFinalitzant el programa...")
+        print("\nTerminating the program...")
     finally:
         client.loop_stop()
         client.disconnect()
