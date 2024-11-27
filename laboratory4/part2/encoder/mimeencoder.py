@@ -74,8 +74,8 @@ def main():
     attachments = [f for f in os.listdir("part2/encoder/attachments") if os.path.isfile(os.path.join("part2/encoder/attachments", f))]
 
     # Set the message details
-    from_addr = "sender@gmail.com"
-    to_addr = "receiver@gmail.com"
+    from_addr = "smtp2go@tecno-campus.cat"
+    to_addr = "rcastella@edu.tecnocampus.cat"
     cc_addr = "examplecc@gmail.com"
     subject = "MIME encoded email"
 
